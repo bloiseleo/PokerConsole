@@ -1,3 +1,4 @@
+import InsufficientCredits from "./errors/InsufficientCredits";
 import PartyFull from "./errors/PartyFull";
 import PlayerAlreadyInParty from "./errors/PlayerAlreadyInParty";
 import { Player } from "./models/Player";
@@ -140,11 +141,13 @@ export default class TexasHoldem implements PokerGame {
                         success: false
                     };
                 }
-                player.charge(value);
+                if(!player.charge(value)) {
+                    throw new InsufficientCredits(`Player ${player} cannot afford ${value} to raise the bet`);
+                };
                 this.addToTableValue(value);
                 this.saveBiggestBet(player.chargedMoney)
                 this.lastTurn = new PokerTurn(player, RAISE_BET);
-                this.createNextTurn(undefined);
+                this.createNextTurn();
                 return {
                     message: `Player ${player.name} raised!`,
                     success: true
@@ -157,11 +160,13 @@ export default class TexasHoldem implements PokerGame {
                     }
                 }
                 const valueToReachTableValue = this.biggestBet - player.chargedMoney;
-                player.charge(valueToReachTableValue);
+                if(!player.charge(valueToReachTableValue)) {
+                    throw new InsufficientCredits(`Player ${player} cannot afford the call for the greatest bet`);
+                };
                 this.addToTableValue(valueToReachTableValue);
                 this.saveBiggestBet(player.chargedMoney);
                 this.lastTurn = new PokerTurn(player, CALL_BET);
-                this.createNextTurn(undefined);
+                this.createNextTurn();
                 return {
                     message: `Player ${player.name} called!`,
                     success: true
@@ -174,7 +179,7 @@ export default class TexasHoldem implements PokerGame {
                     };
                 }
                 this.lastTurn = new PokerTurn(player, CHECK_BET);
-                this.createNextTurn(undefined);
+                this.createNextTurn();
                 return {
                     message: `Player ${player.name} checked`,
                     success: true

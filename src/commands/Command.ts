@@ -32,7 +32,7 @@ export default abstract class Command<T> {
      ▓      ▓▓▓▓       ▓▓▓       ▓▓▓  ▓▓▓▓  ▓▓       ▓▓
      █  ████████  ███  ███  ███  ███  ████  ██  ███  ██
      █        ██  ████  ██  ████  ███      ███  ████  █   
-     	(⌐■_■) - ${message == '' ? message: ' - ' + message}
+     	(⌐■_■) ${message == '' ? message: ' - ' + message}
         `)
         await this.completeAfter(3);
     }

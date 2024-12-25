@@ -109,15 +109,26 @@ export default class PokerAutomata extends EventEmitter {
                     action: (_: unknown) => {
                         const turn = this.getTurn()!;
                         const player = turn.player;
-                        const { message, success } = this.pokerGame.advanceTurn(new TurnData(
-                            FOLD_BET,
-                            0,
-                            player
-                        ));
-                        return {
-                            accepted: success,
-                            message,
-                            nextState: PRE_FLOP
+                        try {
+                            const { message, success } = this.pokerGame.advanceTurn(new TurnData(
+                                FOLD_BET,
+                                0,
+                                player
+                            ));
+                            return {
+                                accepted: success,
+                                message,
+                                nextState: PRE_FLOP
+                            }
+                        } catch(err: unknown) {
+                            if(!(err instanceof PokerError)) {
+                                throw err;
+                            }
+                            return {
+                                accepted: false,
+                                message: err.message,
+                                nextState: PRE_FLOP
+                            };
                         }
                     }
                 },
@@ -132,48 +143,83 @@ export default class PokerAutomata extends EventEmitter {
                         }
                         const turn = this.getTurn();
                         const player = turn!.player;
-                        const { message, success } = this.pokerGame.advanceTurn(new TurnData(
-                            RAISE_BET,
-                            data.value,
-                            player
-                        ));
-                        return {
-                            accepted: success,
-                            message: message,
-                            nextState: PRE_FLOP
-                        };
+                        try {
+                            const { message, success } = this.pokerGame.advanceTurn(new TurnData(
+                                RAISE_BET,
+                                data.value,
+                                player
+                            ));
+                            return {
+                                accepted: success,
+                                message: message,
+                                nextState: PRE_FLOP
+                            };
+                        } catch(err: unknown) {
+                            if(!(err instanceof PokerError)) {
+                                throw err;
+                            }
+                            return {
+                                message: err.message,
+                                accepted: false,
+                                nextState: PRE_FLOP
+                            }
+                        }
+                        
                     }
                 },
                 [CALL_BET]: {
                     action: (_: unknown) => {
                         const turn = this.getTurn();
                         const player = turn!.player;
-                        const { message, success } = this.pokerGame.advanceTurn(new TurnData(
-                            CALL_BET,
-                            0,
-                            player
-                        ));
-                        return {
-                            accepted: success,
-                            message: success ? `Player ${player.name} called`: message,
-                            nextState: PRE_FLOP
+                        try {
+                            const { message, success } = this.pokerGame.advanceTurn(new TurnData(
+                                CALL_BET,
+                                0,
+                                player
+                            ));
+                            return {
+                                accepted: success,
+                                message: success ? `Player ${player.name} called`: message,
+                                nextState: PRE_FLOP
+                            }    
+                        } catch(err: unknown) {
+                            if(!(err instanceof PokerError)) {
+                                throw err;
+                            }
+                            return {
+                                message: err.message,
+                                accepted: false,
+                                nextState: PRE_FLOP
+                            }
                         }
+                        
                     }
                 },
                 [CHECK_BET]: {
                     action: (_: unknown) => {
-                        const { message, success} = this.pokerGame.advanceTurn(new TurnData(CHECK_BET, 0, this.getTurn()!.player));
-                        if(!success) {
-                            return {
-                                accepted: success,
-                                message,
-                                nextState: CHECK_BET
+                        try {
+                            const { message, success} = this.pokerGame.advanceTurn(new TurnData(CHECK_BET, 0, this.getTurn()!.player));
+                            if(!success) {
+                                return {
+                                    accepted: success,
+                                    message,
+                                    nextState: CHECK_BET
+                                }
                             }
-                        }
-                        return {
-                            accepted: true,
-                            message: message,
-                            nextState: PRE_FLOP
+                            return {
+                                accepted: true,
+                                message: message,
+                                nextState: PRE_FLOP
+                            }
+                        } catch(err: unknown) {
+                            if(!(err instanceof PokerError)) {
+                                throw err;
+                            }
+                            return {
+                                message: err.message,
+                                accepted: false,
+                                nextState: PRE_FLOP
+                            };
                         }
                     }
                 }

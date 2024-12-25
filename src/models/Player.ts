@@ -1,3 +1,4 @@
+import InsufficientCredits from "../errors/InsufficientCredits";
 import PokerCard from "./PokerCard";
 
 export class Player {
@@ -22,7 +23,9 @@ export class Player {
         return this.wallet;
     }
     chargeBlind(blind: number) {
-        this.charge(blind);
+        if(!this.charge(blind)) {
+            throw new InsufficientCredits(`Player ${this.toString()} has not enough credits to blind value ${blind}`);
+        };
         this.blind = blind;
     }
     charge(quantity: number): boolean {
