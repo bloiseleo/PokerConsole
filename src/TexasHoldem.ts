@@ -16,27 +16,18 @@ export default class TexasHoldem implements PokerGame {
     private allPlayersPlayed = false;
     private tableValue: number = 0;
     private biggestBet: number = Number.MIN_SAFE_INTEGER;
+    private table: PokerCard[] = [];
     constructor() {
         this.deck = PokerCard.generateDefault();
     }
     private removePlayer(id: string): void {
         this.players.delete(id);
     }
-    playersStillNeedToPlay(): boolean {
-        let stillNeedToPlay = this.players.size;
-        this.players.forEach((p) => {
-            if(p.chargedMoney >= this.biggestBet) {
-                stillNeedToPlay--
-            };
-        });
-        return stillNeedToPlay > 0;
+    get pot() {
+        return this.tableValue;
     }
-    getPlayers(): Player[] {
-        const players: Player[] = []
-        this.players.forEach((p) => {
-            players.push(p);
-        });
-        return players;
+    get tableCards() {
+        return this.table;
     }
     get allPlayersPlayedAlready() {
         return this.allPlayersPlayed;
@@ -68,9 +59,6 @@ export default class TexasHoldem implements PokerGame {
         this.deck = this.deck.filter((_, cardIndex) => cardIndex !== cardDeckIndex);
         return card;
     }
-    partyAlreadyFull(): boolean {
-        return this.partyCapacity == this.players.size;
-    }
     private addToTableValue(value: number) {
         this.tableValue += value;
     }
@@ -79,30 +67,19 @@ export default class TexasHoldem implements PokerGame {
             this.playerList.push(p);
         });
     }
-    preFloop(): void {
-        this.players.forEach((player) => {
-            let ri = Math.random();
-            for(let i = 0; i < 2; i++) player.hand.push(this.getCardFromDeck());
-            if(ri >= 0.5) {
-                player.chargeBlind(this.bigBlind);
-                this.addToTableValue(this.bigBlind);
-                this.saveBiggestBet(this.bigBlind);
-            } else {
-                player.chargeBlind(this.smallBlind);
-                this.addToTableValue(this.smallBlind);
-                this.saveBiggestBet(this.smallBlind);
-            }
-        });
-        this.createPlayerArray();
-        this.createNextTurn(undefined);
-    }
-    partyWithMinimumRequired(): boolean {
-        return this.players.size >= 2;
+    private getCardsFromDeck(n: number): PokerCard[] {
+        const cards: PokerCard[] = [];
+        for(let i = 0; i < n; i++) cards.push(this.getCardFromDeck());
+        return cards;
     }
     private saveBiggestBet(bet: number): void {
         if(this.biggestBet < bet) {
             this.biggestBet = bet;
         }
+    }
+    private createFirstTurn() {
+        this.currentTurnIndex = 1;
+        this.createNextTurn();
     }
     private createNextTurn(action?: symbol) {
         if(this.currentTurnIndex >= this.playerList.length) {
@@ -113,6 +90,32 @@ export default class TexasHoldem implements PokerGame {
             this.playerList.at(this.currentTurnIndex++)!,
             action
         );
+    }
+    preFlop(): void {
+        let playerIndex = 0;
+        this.players.forEach((player) => {
+            if(playerIndex % 2 == 0) {
+                player.chargeBlind(this.bigBlind);
+                this.addToTableValue(this.bigBlind);
+                this.saveBiggestBet(this.bigBlind);
+            } else {
+                player.chargeBlind(this.smallBlind);
+                this.addToTableValue(this.smallBlind);
+                this.saveBiggestBet(this.smallBlind);
+            }
+            player.hand.push(...this.getCardsFromDeck(2));
+            playerIndex++;
+        });
+        this.createPlayerArray();
+        this.createFirstTurn();
+    }
+    partyWithMinimumRequired(): boolean {
+        return this.players.size >= 2;
+    }
+    takeFlopCards(): void {
+        for(let i = 0; i < 3; i++) {
+            this.table.push(this.getCardFromDeck());
+        }
     }
     advanceTurn(turn: TurnData): TurnResponse {
         const { action, player, value } = turn;
@@ -193,7 +196,23 @@ export default class TexasHoldem implements PokerGame {
     getLastTurn() {
         return this.lastTurn;
     }
-    get pot() {
-        return this.tableValue;
+    playersStillNeedToPlay(): boolean {
+        let stillNeedToPlay = this.players.size;
+        this.players.forEach((p) => {
+            if(p.chargedMoney >= this.biggestBet) {
+                stillNeedToPlay--
+            };
+        });
+        return stillNeedToPlay > 0;
+    }
+    getPlayers(): Player[] {
+        const players: Player[] = []
+        this.players.forEach((p) => {
+            players.push(p);
+        });
+        return players;
+    }
+    partyAlreadyFull(): boolean {
+        return this.partyCapacity == this.players.size;
     }
 }

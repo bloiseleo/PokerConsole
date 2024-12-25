@@ -36,7 +36,7 @@ async function executeCommand(command: Command<PokerAutomata>) {
                 console.clear();
                 break;
             case FLOP:
-                terminal.displayPreFlopBadge(poker, game);
+                terminal.displayFlopBadge(poker, game);
                 terminal.newLine();
                 await terminal.displayList(pfCommands);
                 break;

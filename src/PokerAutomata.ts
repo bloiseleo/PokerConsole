@@ -95,7 +95,7 @@ export default class PokerAutomata extends EventEmitter {
         [PRE_FLOP]: {
             onEnter: () => {
                 if(this.currentState != PRE_FLOP) {
-                    this.pokerGame.preFloop();
+                    this.pokerGame.preFlop();
                     return;
                 }
                 if(!this.pokerGame.playersStillNeedToPlay() && this.pokerGame.allPlayersPlayedAlready) {
@@ -180,8 +180,8 @@ export default class PokerAutomata extends EventEmitter {
             }
         },
         [FLOP]: {
-            onEnter() {
-                console.log('Entered!');
+            onEnter: () => {
+                this.pokerGame.takeFlopCards()
             },
             on: {}
         }

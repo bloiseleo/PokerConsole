@@ -64,6 +64,8 @@ export default class Terminal {
     }
     displayFlopBadge(poker: PokerAutomata, game: PokerGame) {
         this.displayPreFlopBadge(poker, game);
+        this.newLine();
+        this.message(`Table: ${game.tableCards.map(c => c.toString()).join(', ')}`);
     }
     private displayBets(players: Player[]) {
         this.message('BETS');

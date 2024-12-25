@@ -1,5 +1,6 @@
 import { PokerTurn, TurnData, TurnResponse } from "../PokerTurn";
 import { Player } from "./Player";
+import PokerCard from "./PokerCard";
 
 export default interface PokerGame {
     get partyCapacity(): number;
@@ -8,13 +9,15 @@ export default interface PokerGame {
     get turn(): PokerTurn | undefined;
     get pot(): number;
     get allPlayersPlayedAlready(): boolean;
+    get tableCards(): PokerCard[];
     resetTurn(): void;
     addPlayer(player: Player): void;
-    preFloop(): void;
+    preFlop(): void;
     getPlayers(): Player[];
     partyAlreadyFull(): boolean;
     partyWithMinimumRequired(): boolean;
     advanceTurn(turn: TurnData): TurnResponse;
     getLastTurn(): PokerTurn | undefined;
     playersStillNeedToPlay(): boolean;
+    takeFlopCards(): void;
 }
