@@ -47,22 +47,23 @@ export default class Terminal {
         this.message('Players: ' + (currentPlayers == "" ? 'Empty': currentPlayers));
         this.newLine();
     }
-    displayPreFloopBadge(poker: PokerAutomata, game: PokerGame) {
+    displayPreFlopBadge(poker: PokerAutomata, game: PokerGame) {
         this.displayIdleBadge(poker, game);
         const turn = poker.getTurn();
         if(turn) {
             const player = turn.player;
             const hand = player.hand.map(card => card.toString()).join(', ');
             this.message(`Your hand: ${hand}`);
+            this.message(`Wallet: R$ ${turn.player.valueInWallet.toFixed(2)}`);
+            this.message(`Current turn: ${turn.player.name}`);
         }
-        this.message('Current turn: ' + poker.getTurn()?.player.name);
         const players = game.getPlayers();
         this.message('Pot: ' + game.pot);
         this.newLine();
         this.displayBets(players);
     }
-    displayFloopBadge(poker: PokerAutomata, game: PokerGame) {
-        this.displayPreFloopBadge(poker, game);
+    displayFlopBadge(poker: PokerAutomata, game: PokerGame) {
+        this.displayPreFlopBadge(poker, game);
     }
     private displayBets(players: Player[]) {
         this.message('BETS');

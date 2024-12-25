@@ -18,6 +18,9 @@ export class Player {
     get blindPick() {
         return this.blind;
     }
+    get valueInWallet() {
+        return this.wallet;
+    }
     chargeBlind(blind: number) {
         this.charge(blind);
         this.blind = blind;

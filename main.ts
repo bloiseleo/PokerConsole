@@ -29,14 +29,14 @@ async function executeCommand(command: Command<PokerAutomata>) {
                 console.clear();
                 break;
             case PRE_FLOP:
-                terminal.displayPreFloopBadge(poker, game);
+                terminal.displayPreFlopBadge(poker, game);
                 terminal.newLine();
                 const preFloopCommand = await terminal.displayList(pfCommands);
                 await executeCommand(preFloopCommand);
                 console.clear();
                 break;
             case FLOP:
-                terminal.displayFloopBadge(poker, game);
+                terminal.displayPreFlopBadge(poker, game);
                 terminal.newLine();
                 await terminal.displayList(pfCommands);
                 break;

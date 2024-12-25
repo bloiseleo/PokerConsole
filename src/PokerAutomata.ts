@@ -155,7 +155,7 @@ export default class PokerAutomata extends EventEmitter {
                         ));
                         return {
                             accepted: success,
-                            message: success ? 'Bet accepted': message,
+                            message: success ? `Player ${player.name} called`: message,
                             nextState: PRE_FLOP
                         }
                     }
@@ -172,7 +172,7 @@ export default class PokerAutomata extends EventEmitter {
                         }
                         return {
                             accepted: true,
-                            message: 'Bet accepted',
+                            message: message,
                             nextState: PRE_FLOP
                         }
                     }
