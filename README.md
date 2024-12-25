@@ -19,3 +19,4 @@ Developed using typescript and no external dependencies.
 - Download and Install Node JS
 - Install all dependencies using `npm install`
 - Now, just run `npm build`. It'll generate a `target` folder holding the transpiled code to javascript.
+- Now, enter the `target` folder and run `node ./main.js`
