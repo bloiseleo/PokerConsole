@@ -78,7 +78,6 @@ export default class TexasHoldem implements PokerGame {
         }
     }
     private createFirstTurn() {
-        this.currentTurnIndex = 1;
         this.createNextTurn();
     }
     private createNextTurn(action?: symbol) {
