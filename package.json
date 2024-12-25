@@ -4,7 +4,8 @@
   "main": "main.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "tsx main.ts"
+    "start": "tsx main.ts",
+    "build": "tsc"
   },
   "keywords": [],
   "author": "",
