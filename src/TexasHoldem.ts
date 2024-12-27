@@ -23,6 +23,10 @@ export default class TexasHoldem implements PokerGame {
     }
     private removePlayer(id: string): void {
         this.players.delete(id);
+        this.createPlayerArray(true);
+    }
+    get playersInTableQuantity() {
+        return this.players.size;
     }
     get pot() {
         return this.tableValue;
@@ -63,7 +67,10 @@ export default class TexasHoldem implements PokerGame {
     private addToTableValue(value: number) {
         this.tableValue += value;
     }
-    private createPlayerArray() {
+    private createPlayerArray(clean: boolean = false) {
+        if(clean) {
+            this.playerList = [];
+        }
         this.players.forEach(p => {
             this.playerList.push(p);
         });
@@ -218,5 +225,11 @@ export default class TexasHoldem implements PokerGame {
     }
     partyAlreadyFull(): boolean {
         return this.partyCapacity == this.players.size;
+    }
+    processWinner(): Player | undefined {
+        if(this.playersInTableQuantity == 1) {
+            return this.playerList.at(0)!;
+        }
+        return undefined;
     }
 }

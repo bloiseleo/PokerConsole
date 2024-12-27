@@ -10,6 +10,8 @@ export default interface PokerGame {
     get pot(): number;
     get allPlayersPlayedAlready(): boolean;
     get tableCards(): PokerCard[];
+    get playersInTableQuantity(): number;
+    processWinner(): Player | undefined;
     resetTurn(): void;
     addPlayer(player: Player): void;
     preFlop(): void;

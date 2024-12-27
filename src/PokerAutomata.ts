@@ -1,6 +1,6 @@
 import EventEmitter from "node:events";
 import { FLOP, IDLE, PRE_FLOP } from "./models/PokerState";
-import { NEW_PLAYER, START } from "./models/PokerEvents";
+import { FINISH, NEW_PLAYER, START, WIN } from "./models/PokerEvents";
 import RejectedAction from "./errors/RejectedAction";
 import PokerGame from "./models/PokerGame";
 import { Player } from "./models/Player";
@@ -18,6 +18,7 @@ type AutomataActionResponse = {
 
 type JumpResponse = {
     state: symbol;
+    thenCall?: [symbol, unknown]
 }
 
 type AutomataAction = {
@@ -97,6 +98,13 @@ export default class PokerAutomata extends EventEmitter {
                 if(this.currentState != PRE_FLOP) {
                     this.pokerGame.preFlop();
                     return;
+                } 
+                if(this.pokerGame.playersInTableQuantity == 1) {
+                    const winner = this.pokerGame.processWinner()!; 
+                    return {
+                        state: FINISH,
+                        thenCall: [WIN, winner]
+                    };
                 }
                 if(!this.pokerGame.playersStillNeedToPlay() && this.pokerGame.allPlayersPlayedAlready) {
                     return {
@@ -230,6 +238,22 @@ export default class PokerAutomata extends EventEmitter {
                 this.pokerGame.takeFlopCards()
             },
             on: {}
+        },
+        [FINISH]: {
+            on: {
+                [WIN]: {
+                    action: (data: unknown) => {
+                        if(!(data instanceof Player)) {
+                            throw new Error('Data must be of type Player');
+                        }
+                        return {
+                            accepted: true,
+                            message: `Player ${data} won!`,
+                            nextState: FINISH
+                        }
+                    }
+                }
+            }
         }
     }
     private pokerGame: PokerGame;
@@ -251,11 +275,17 @@ export default class PokerAutomata extends EventEmitter {
         if(onEnter) {
             const jump = onEnter();
             if(jump) {
-                return this.advanceTo(jump.state);
+                return this.executeJump(jump);
             }
         }
         this.currentState = nextState;
         return;
+    }
+    private executeJump({state, thenCall}: JumpResponse): void {
+        this.advanceTo(state);
+        if(thenCall) {
+            this.dispatch(thenCall[0], thenCall[1]);
+        }
     }
     public getTurn() {
         return this.pokerGame.turn;
