@@ -1,5 +1,5 @@
+import PokerAutomata from "../automata/PokerAutomata";
 import { CHECK_BET } from "../models/PokerBetActions";
-import PokerAutomata from "../PokerAutomata";
 import Command from "./Command";
 
 export class CheckCommandPoker extends Command<PokerAutomata> {

@@ -1,9 +1,10 @@
-import { Player } from "./models/Player";
+import { Player } from "./poker/Player";
 
 export class PokerTurn {
     constructor(
         public player: Player,
-        public action?: symbol
+        public action?: symbol,
+        public value: number = 0,
     ) {}
 }
 

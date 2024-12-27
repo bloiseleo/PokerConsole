@@ -1,135 +1,105 @@
-import InsufficientCredits from "./errors/InsufficientCredits";
-import PartyFull from "./errors/PartyFull";
-import PlayerAlreadyInParty from "./errors/PlayerAlreadyInParty";
-import { Player } from "./models/Player";
+import { Player } from "./poker/Player";
 import { CALL_BET, CHECK_BET, FOLD_BET, RAISE_BET } from "./models/PokerBetActions";
-import PokerCard from "./models/PokerCard";
-import PokerGame from "./models/PokerGame";
+import Party from "./poker/Party";
 import { PokerTurn, TurnData, TurnResponse } from "./PokerTurn";
+import Deck from "./poker/Deck";
+import Table from "./poker/Table";
+import RoundHistory from "./poker/RoundHistory";
 
-export default class TexasHoldem implements PokerGame {
-    private players: Map<string, Player> = new Map();
-    private deck: PokerCard[];
-    private lastTurn?: PokerTurn = undefined;
-    private currentTurn?: PokerTurn = undefined;
-    private playerList: Player[] = [];
-    private currentTurnIndex: number = 0;
-    private allPlayersPlayed = false;
-    private tableValue: number = 0;
-    private biggestBet: number = Number.MIN_SAFE_INTEGER;
-    private table: PokerCard[] = [];
-    constructor() {
-        this.deck = PokerCard.generateDefault();
+export default class TexasHoldem {
+    private history: RoundHistory;
+    constructor(
+        private party: Party,
+        private deck: Deck,
+        private table: Table
+    ) { 
+        this.history = new RoundHistory(party);
     }
-    private removePlayer(id: string): void {
-        this.players.delete(id);
-        this.createPlayerArray(true);
+    static build() {
+        return new TexasHoldem(
+            new Party(2, 5),
+            Deck.generateDefault(),
+            new Table(
+                5,
+                10
+            )
+        )
     }
-    get playersInTableQuantity() {
-        return this.players.size;
+    get players(): Player[] {
+        const players: Player[] = [];
+        this.party.forEach(p => {
+            players.push(p);
+        });
+        return players;
+    }
+    get allPartyPlayedOnce(): boolean {
+        return Boolean(this.history.currentRound?.allPlayersPlayedOnce);
     }
     get pot() {
-        return this.tableValue;
+        return this.table.pot;
     }
     get tableCards() {
-        return this.table;
-    }
-    get allPlayersPlayedAlready() {
-        return this.allPlayersPlayed;
+        return this.table.cards;
     }
     get bigBlind(): number {
-        return 10;
+        return this.table.bigBlind;
     }
     get smallBlind(): number {
-        return 5;
+        return this.table.smallBlind;
     }
     get partyCapacity(): number {
-        return 5;
+        return this.party.capacity;
+    }
+    get partySize(): number {
+        return this.party.size;
     }
     get turn(): PokerTurn | undefined {
-        return this.currentTurn;
+        return this.history.currentRound?.turn;
     }
     public addPlayer(player: Player): void {
-        if(this.players.size == this.partyCapacity) {
-            throw new PartyFull();
+        this.party.addPlayer(player);
+    }
+    private getCurrentRoundOrCreateIfNotExists() {
+        let round = this.history.currentRound;
+        if(!round) {
+           round = this.history.nextRound();
         }
-        if(this.players.has(player.id.toString())) {
-            throw new PlayerAlreadyInParty(player.id);
+        return round;
+    }
+    private createNextTurn() {
+        this.getCurrentRoundOrCreateIfNotExists().nextTurn();
+    }
+    private updateCurrentTurnAction(action: symbol) {
+        if(this.turn) {
+            this.turn.action = action;
         }
-        this.players.set(player.id.toString(), player);
-    }
-    private getCardFromDeck() {
-        const cardDeckIndex = Math.floor(Math.random() * this.deck.length);
-        const card = this.deck[cardDeckIndex];
-        this.deck = this.deck.filter((_, cardIndex) => cardIndex !== cardDeckIndex);
-        return card;
-    }
-    private addToTableValue(value: number) {
-        this.tableValue += value;
-    }
-    private createPlayerArray(clean: boolean = false) {
-        if(clean) {
-            this.playerList = [];
-        }
-        this.players.forEach(p => {
-            this.playerList.push(p);
-        });
-    }
-    private getCardsFromDeck(n: number): PokerCard[] {
-        const cards: PokerCard[] = [];
-        for(let i = 0; i < n; i++) cards.push(this.getCardFromDeck());
-        return cards;
-    }
-    private saveBiggestBet(bet: number): void {
-        if(this.biggestBet < bet) {
-            this.biggestBet = bet;
-        }
-    }
-    private createFirstTurn() {
-        this.createNextTurn();
-    }
-    private createNextTurn(action?: symbol) {
-        if(this.currentTurnIndex >= this.playerList.length) {
-            this.currentTurnIndex = 0;
-            this.allPlayersPlayed = true;
-        }
-        this.currentTurn = new PokerTurn(
-            this.playerList.at(this.currentTurnIndex++)!,
-            action
-        );
     }
     preFlop(): void {
-        let playerIndex = 0;
-        this.players.forEach((player) => {
+        this.party.forEach((player, playerIndex) => {
             if(playerIndex % 2 == 0) {
                 player.chargeBlind(this.bigBlind);
-                this.addToTableValue(this.bigBlind);
-                this.saveBiggestBet(this.bigBlind);
+                this.table.addBigBlindToPot();
             } else {
                 player.chargeBlind(this.smallBlind);
-                this.addToTableValue(this.smallBlind);
-                this.saveBiggestBet(this.smallBlind);
+                this.table.addSmallBlindToPot();
             }
-            player.hand.push(...this.getCardsFromDeck(2));
-            playerIndex++;
+            player.addToHand(...this.deck.getNCardsFromDeck(2));
         });
-        this.createPlayerArray();
-        this.createFirstTurn();
+        this.createNextTurn();
     }
     partyWithMinimumRequired(): boolean {
-        return this.players.size >= 2;
+        return this.party.minimumFulfilled;
     }
     takeFlopCards(): void {
-        for(let i = 0; i < 3; i++) {
-            this.table.push(this.getCardFromDeck());
-        }
+        this.table.addCards(...this.deck.getNCardsFromDeck(3));
     }
     advanceTurn(turn: TurnData): TurnResponse {
         const { action, player, value } = turn;
         switch(action) {
             case FOLD_BET:
-                this.removePlayer(player.id.toString());
-                this.createNextTurn(undefined);
+                this.party.removePlayer(player);
+                this.updateCurrentTurnAction(FOLD_BET);
+                this.createNextTurn();
                 return {
                     message: `Player ${player.name} folded`,
                     success: true
@@ -137,55 +107,50 @@ export default class TexasHoldem implements PokerGame {
             case RAISE_BET:
                 if(value <= 0) {
                     return {
-                        message: 'The value must be positive',
+                        message: `The value must be positive. ${value} provided`,
                         success: false
                     };
                 }
-                const total = player.chargedMoney + value;
-                if(total <= this.biggestBet) {
+                const total = player.bet + value;
+                if(total <= this.table.bet) {
                     return {
-                        message: 'Insufficient Value',
+                        message: `Insufficient Value ${total}`,
                         success: false
                     };
                 }
-                if(!player.charge(value)) {
-                    throw new InsufficientCredits(`Player ${player} cannot afford ${value} to raise the bet`);
-                };
-                this.addToTableValue(value);
-                this.saveBiggestBet(player.chargedMoney)
-                this.lastTurn = new PokerTurn(player, RAISE_BET);
+                player.charge(value);
+                this.table.addToPot(value);
+                this.table.saveBiggestBet(player.bet);
+                this.updateCurrentTurnAction(RAISE_BET);                
                 this.createNextTurn();
                 return {
                     message: `Player ${player.name} raised!`,
                     success: true
                 };
             case CALL_BET:
-                if(player.chargedMoney >= this.biggestBet) {
+                if(player.bet >= this.table.bet) {
                     return {
-                        message: 'You cannot call',
+                        message: `Player ${player.name} cannot call!`,
                         success: false
                     }
                 }
-                const valueToReachTableValue = this.biggestBet - player.chargedMoney;
-                if(!player.charge(valueToReachTableValue)) {
-                    throw new InsufficientCredits(`Player ${player} cannot afford the call for the greatest bet`);
-                };
-                this.addToTableValue(valueToReachTableValue);
-                this.saveBiggestBet(player.chargedMoney);
-                this.lastTurn = new PokerTurn(player, CALL_BET);
+                const valueToReachTableValue = this.table.bet - player.bet;
+                player.charge(valueToReachTableValue);                
+                this.table.addToPot(valueToReachTableValue);
+                this.updateCurrentTurnAction(CALL_BET);
                 this.createNextTurn();
                 return {
                     message: `Player ${player.name} called!`,
                     success: true
                 };
             case CHECK_BET:
-                if(player.chargedMoney != this.biggestBet) {
+                if(player.bet != this.table.bet) {
                     return {
-                        message: 'You cannot check',
+                        message: `Player ${player.name} cannot check`,
                         success: false
                     };
                 }
-                this.lastTurn = new PokerTurn(player, CHECK_BET);
+                this.updateCurrentTurnAction(CHECK_BET);
                 this.createNextTurn();
                 return {
                     message: `Player ${player.name} checked`,
@@ -199,36 +164,20 @@ export default class TexasHoldem implements PokerGame {
                 
         }
     }
-    resetTurn(): void {
-        this.allPlayersPlayed = false;
-        this.currentTurnIndex = 0;
-        this.createNextTurn(undefined);
-    }
-    getLastTurn() {
-        return this.lastTurn;
-    }
     playersStillNeedToPlay(): boolean {
-        let stillNeedToPlay = this.players.size;
-        this.players.forEach((p) => {
-            if(p.chargedMoney >= this.biggestBet) {
-                stillNeedToPlay--
+        let notNeedToPlay = 1;
+        this.party.forEach((p) => {
+            if(p.bet >= this.table.bet) {
+                notNeedToPlay *= 1;
+                return
             };
+            notNeedToPlay *= 0
         });
-        return stillNeedToPlay > 0;
-    }
-    getPlayers(): Player[] {
-        const players: Player[] = []
-        this.players.forEach((p) => {
-            players.push(p);
-        });
-        return players;
-    }
-    partyAlreadyFull(): boolean {
-        return this.partyCapacity == this.players.size;
+        return notNeedToPlay != 1;
     }
     processWinner(): Player | undefined {
-        if(this.playersInTableQuantity == 1) {
-            return this.playerList.at(0)!;
+        if(this.party.size == 1) {
+            return this.party.at(0)!;
         }
         return undefined;
     }

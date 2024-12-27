@@ -1,9 +1,10 @@
 import { createInterface, Interface } from "readline/promises";
 import Command from "../commands/Command";
 import { FLOP, IDLE, PRE_FLOP } from "../models/PokerState";
-import PokerAutomata from "../PokerAutomata";
-import PokerGame from "../models/PokerGame";
-import { Player } from "../models/Player";
+import { Player } from "../poker/Player";
+import PokerAutomata from "../automata/PokerAutomata";
+import TexasHoldem from "../TexasHoldem";
+import PokerView from "../view/PokerView";
 
 export default class Terminal {
     private readline: Interface;
@@ -26,50 +27,41 @@ export default class Terminal {
         }
     }
     private displayBanner() {
-        this.message(`
-            ▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄▄  ▄    ▄  ▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄▄ 
-           ▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌▐░▌  ▐░▌▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌
-           ▐░█▀▀▀▀▀▀▀█░▌▐░█▀▀▀▀▀▀▀█░▌▐░▌ ▐░▌ ▐░█▀▀▀▀▀▀▀▀▀ ▐░█▀▀▀▀▀▀▀█░▌
-           ▐░▌       ▐░▌▐░▌       ▐░▌▐░▌▐░▌  ▐░▌          ▐░▌       ▐░▌
-           ▐░█▄▄▄▄▄▄▄█░▌▐░▌       ▐░▌▐░▌░▌   ▐░█▄▄▄▄▄▄▄▄▄ ▐░█▄▄▄▄▄▄▄█░▌
-           ▐░░░░░░░░░░░▌▐░▌       ▐░▌▐░░▌    ▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌
-           ▐░█▀▀▀▀▀▀▀▀▀ ▐░▌       ▐░▌▐░▌░▌   ▐░█▀▀▀▀▀▀▀▀▀ ▐░█▀▀▀▀█░█▀▀ 
-           ▐░▌          ▐░▌       ▐░▌▐░▌▐░▌  ▐░▌          ▐░▌     ▐░▌  
-           ▐░▌          ▐░█▄▄▄▄▄▄▄█░▌▐░▌ ▐░▌ ▐░█▄▄▄▄▄▄▄▄▄ ▐░▌      ▐░▌ 
-           ▐░▌          ▐░░░░░░░░░░░▌▐░▌  ▐░▌▐░░░░░░░░░░░▌▐░▌       ▐░▌
-            ▀            ▀▀▀▀▀▀▀▀▀▀▀  ▀    ▀  ▀▀▀▀▀▀▀▀▀▀▀  ▀         ▀   
-               `);
+        this.message(PokerView.load());
     }
-    displayIdleBadge(poker: PokerAutomata, game: PokerGame) {
+    displayIdleBadge(poker: PokerAutomata, game: TexasHoldem) {
         this.displayBanner();
-        const currentPlayers = game.getPlayers().join(', ');
+        const currentPlayers = game.players.join(', ');
         this.message('Current State: ' + this.translateFromSymbol(poker.state));
         this.message('Players: ' + (currentPlayers == "" ? 'Empty': currentPlayers));
         this.newLine();
     }
-    displayPreFlopBadge(poker: PokerAutomata, game: PokerGame) {
+    displayPreFlopBadge(poker: PokerAutomata, game: TexasHoldem) {
         this.displayIdleBadge(poker, game);
         const turn = poker.getTurn();
         if(turn) {
             const player = turn.player;
-            const hand = player.hand.map(card => card.toString()).join(', ');
+            const hand = player
+                .hand
+                .cards
+                .map(card => card.toString()).join(', ');
             this.message(`Your hand: ${hand}`);
             this.message(`Wallet: R$ ${turn.player.valueInWallet.toFixed(2)}`);
             this.message(`Current turn: ${turn.player.name}`);
         }
-        const players = game.getPlayers();
-        this.message('Pot: ' + game.pot);
+        const players = game.players;
+        this.message('Pot: ' + game.pot.toFixed(2));
         this.newLine();
         this.displayBets(players);
     }
-    displayFlopBadge(poker: PokerAutomata, game: PokerGame) {
+    displayFlopBadge(poker: PokerAutomata, game: TexasHoldem) {
         this.displayPreFlopBadge(poker, game);
         this.newLine();
         this.message(`Table: ${game.tableCards.map(c => c.toString()).join(', ')}`);
     }
     private displayBets(players: Player[]) {
         this.message('BETS');
-        this.message(players.map(p => `${p.name}: R$ ${p.chargedMoney.toFixed(2)}`).join('\n'))
+        this.message(players.map(p => `${p.name}: R$ ${p.bet.toFixed(2)}`).join('\n'))
     }
     async displayList(options: Command<unknown>[]): Promise<Command<unknown>> {
         let message = "";
@@ -100,8 +92,8 @@ export default class Terminal {
     newLine() {
         console.log('\n');
     }
-    message(message: string) {
-        console.log(message);
+    message(data: Object) {
+        console.log(data.toString());
     }
     error(message: string) {
         this.message('ERROR: ' + message);

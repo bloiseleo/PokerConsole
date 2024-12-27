@@ -1,6 +1,6 @@
+import PokerAutomata from "../automata/PokerAutomata";
 import { BetData } from "../dtos/BetData";
 import { RAISE_BET } from "../models/PokerBetActions";
-import PokerAutomata from "../PokerAutomata";
 import Command from "./Command";
 
 export default class RaiseBetCommandPoker extends Command<PokerAutomata> {

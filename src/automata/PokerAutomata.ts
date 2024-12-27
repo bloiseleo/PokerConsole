@@ -1,14 +1,16 @@
 import EventEmitter from "node:events";
-import { FLOP, IDLE, PRE_FLOP } from "./models/PokerState";
-import { FINISH, NEW_PLAYER, START, WIN } from "./models/PokerEvents";
-import RejectedAction from "./errors/RejectedAction";
-import PokerGame from "./models/PokerGame";
-import { Player } from "./models/Player";
-import PokerError from "./errors/PokerError";
-import PartyFull from "./errors/PartyFull";
-import { TurnData } from "./PokerTurn";
-import { CALL_BET, CHECK_BET, FOLD_BET, RAISE_BET } from "./models/PokerBetActions";
-import { BetData } from "./dtos/BetData";
+import InvalidAction from "./errors/InvalidAction";
+import RejectedAction from "../errors/RejectedAction";
+import { FLOP, IDLE, PRE_FLOP } from "../models/PokerState";
+import { FINISH, NEW_PLAYER, START, WIN } from "../models/PokerEvents";
+import { Player } from "../poker/Player";
+import InvalidType from "./errors/InvalidType";
+import PokerError from "../errors/PokerError";
+import PartyFull from "../errors/PartyFull";
+import { CALL_BET, CHECK_BET, FOLD_BET, RAISE_BET } from "../models/PokerBetActions";
+import { TurnData } from "../PokerTurn";
+import { BetData } from "../dtos/BetData";
+import TexasHoldem from "../TexasHoldem";
 
 type AutomataActionResponse = {
     nextState: symbol;
@@ -47,7 +49,7 @@ export default class PokerAutomata extends EventEmitter {
                 [NEW_PLAYER]: {
                     action: (data) => {
                         if(!(data instanceof Player)) {
-                            throw new Error('NEW_PLAYER must receive a Player instance');
+                            throw new InvalidType(Player);
                         }
                         try {
                             this.pokerGame.addPlayer(data);
@@ -99,14 +101,14 @@ export default class PokerAutomata extends EventEmitter {
                     this.pokerGame.preFlop();
                     return;
                 } 
-                if(this.pokerGame.playersInTableQuantity == 1) {
+                if(this.pokerGame.partySize == 1) {
                     const winner = this.pokerGame.processWinner()!; 
                     return {
                         state: FINISH,
                         thenCall: [WIN, winner]
                     };
                 }
-                if(!this.pokerGame.playersStillNeedToPlay() && this.pokerGame.allPlayersPlayedAlready) {
+                if(!this.pokerGame.playersStillNeedToPlay() && this.pokerGame.allPartyPlayedOnce) {
                     return {
                         state: FLOP
                     };
@@ -143,11 +145,7 @@ export default class PokerAutomata extends EventEmitter {
                 [RAISE_BET]: {
                     action: (data: unknown) => {
                         if(!(data instanceof BetData)) {
-                            return {
-                                message: 'Data must be instance of BetData',
-                                accepted: false,
-                                nextState: PRE_FLOP
-                            };
+                            throw new InvalidType(BetData);
                         }
                         const turn = this.getTurn();
                         const player = turn!.player;
@@ -244,7 +242,7 @@ export default class PokerAutomata extends EventEmitter {
                 [WIN]: {
                     action: (data: unknown) => {
                         if(!(data instanceof Player)) {
-                            throw new Error('Data must be of type Player');
+                            throw new InvalidType(Player);
                         }
                         return {
                             accepted: true,
@@ -256,8 +254,8 @@ export default class PokerAutomata extends EventEmitter {
             }
         }
     }
-    private pokerGame: PokerGame;
-    constructor(pokerGame: PokerGame) {
+    private pokerGame: TexasHoldem;
+    constructor(pokerGame: TexasHoldem) {
         super();
         this.currentState = IDLE;
         this.pokerGame = pokerGame;
@@ -293,7 +291,7 @@ export default class PokerAutomata extends EventEmitter {
     public dispatch(action: symbol, data: unknown): DispatchResult {
         const automataAction = this.getHandler(action);
         if(typeof automataAction === 'undefined') {
-            throw new Error('Invalid action ' + action.toString());
+            throw new InvalidAction(action);
         }
         const { action: handler } = automataAction;
         try {

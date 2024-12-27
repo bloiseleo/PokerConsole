@@ -1,11 +1,11 @@
-import PokerAutomata from "./src/PokerAutomata";
 import TexasHoldem from "./src/TexasHoldem";
+import PokerAutomata from "./src/automata/PokerAutomata";
 import { idleCommands, preFloopCommands } from './src/commands';
 import Command from "./src/commands/Command";
 import Terminal from "./src/helpers/Terminal";
 import { FLOP, IDLE, PRE_FLOP } from "./src/models/PokerState";
 
-const game = new TexasHoldem();
+const game = TexasHoldem.build();
 
 const poker = new PokerAutomata(
     game
