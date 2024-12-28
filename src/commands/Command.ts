@@ -1,4 +1,6 @@
 import Terminal from '../helpers/Terminal';
+import PokerErrorView from '../view/PokerErrorView';
+import PokerSuccessView from '../view/PokerSuccessView';
 export default abstract class Command<T> {
     constructor(
         public name: string,
@@ -14,26 +16,18 @@ export default abstract class Command<T> {
             }, delay * 1000);
         });
     } 
-    protected async successMessage(message: string = "") {
-        this.terminal.message(`
-            / ____| |  | |/ ____/ ____|  ____|/ ____/ ____|
-           | (___ | |  | | |   | |    | |__  | (___| (___  
-            \___ \| |  | | |   | |    |  __|  \___ \\___ \ 
-             ____) | |__| | |___| |____| |____ ____) |___) |
-            |_____/ \____/ \_____\_____|______|_____/_____/ 
-           ☉ ‿ ⚆ ${message !== "" ? " - " + message: message}
-       `);
-       await this.completeAfter(3);  
+    protected buildErrorMessage(error: string): PokerErrorView {
+        return PokerErrorView.load(error);
     }
-    protected async errorMessage(message: string = "") {
-        this.terminal.message(`
-     ░        ░░       ░░░       ░░░░      ░░░       ░░
-     ▒  ▒▒▒▒▒▒▒▒  ▒▒▒▒  ▒▒  ▒▒▒▒  ▒▒  ▒▒▒▒  ▒▒  ▒▒▒▒  ▒
-     ▓      ▓▓▓▓       ▓▓▓       ▓▓▓  ▓▓▓▓  ▓▓       ▓▓
-     █  ████████  ███  ███  ███  ███  ████  ██  ███  ██
-     █        ██  ████  ██  ████  ███      ███  ████  █   
-     	(⌐■_■) ${message == '' ? message: ' - ' + message}
-        `)
+    protected buildSuccessMessage(message: string): PokerSuccessView {
+        return PokerSuccessView.load(message);
+    }
+    protected async errorMessage(message: string) {
+        this.terminal.message(this.buildErrorMessage(message));
+        await this.completeAfter(3);
+    }
+    protected async successMessage(message: string) {
+        this.terminal.message(this.buildSuccessMessage(message));
         await this.completeAfter(3);
     }
 }

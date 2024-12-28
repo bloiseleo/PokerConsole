@@ -12,10 +12,10 @@ export default class AddPlayerToPokerCommand extends Command<PokerAutomata> {
         const player = new Player(AddPlayerToPokerCommand.counter++, playerName, new Wallet(200));
         const { message, success } = data.dispatch(NEW_PLAYER, player);
         if(!success) {
-            console.error(message);
-        } else {
-            console.log(message);
+            await this.errorMessage(message);
+            return false;
         }
+        await this.successMessage(message);
         return success;
     }
 }
