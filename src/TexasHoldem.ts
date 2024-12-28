@@ -5,15 +5,19 @@ import { PokerTurn, TurnData, TurnResponse } from "./PokerTurn";
 import Deck from "./poker/Deck";
 import Table from "./poker/Table";
 import RoundHistory from "./poker/RoundHistory";
+import IPokerFold from "./poker/actions/IPokerFold";
+import TexasHoldemFold from "./poker/actions/TexasHoldemFold";
 
 export default class TexasHoldem {
     private history: RoundHistory;
+    private foldAction: IPokerFold;
     constructor(
         private party: Party,
         private deck: Deck,
         private table: Table
     ) { 
         this.history = new RoundHistory(party);
+        this.foldAction = new TexasHoldemFold(party);
     }
     static build() {
         return new TexasHoldem(
@@ -97,13 +101,10 @@ export default class TexasHoldem {
         const { action, player, value } = turn;
         switch(action) {
             case FOLD_BET:
-                this.party.removePlayer(player);
+                const response = this.foldAction.execute(turn);
                 this.updateCurrentTurnAction(FOLD_BET);
                 this.createNextTurn();
-                return {
-                    message: `Player ${player.name} folded`,
-                    success: true
-                };
+                return response;
             case RAISE_BET:
                 if(value <= 0) {
                     return {
