@@ -5,12 +5,18 @@ import { PokerTurn, TurnData, TurnResponse } from "./PokerTurn";
 import Deck from "./poker/Deck";
 import Table from "./poker/Table";
 import RoundHistory from "./poker/RoundHistory";
-import IPokerFold from "./poker/actions/IPokerFold";
 import TexasHoldemFold from "./poker/actions/TexasHoldemFold";
+import TexasHoldemRaise from "./poker/actions/TexasHoldemRaise";
+import IPokerAction from "./poker/actions/IPokerAction";
+import TexasHoldemCall from "./poker/actions/TexasHoldemCall";
+import TexasHoldemCheck from "./poker/actions/TexasHoldemCheck";
 
 export default class TexasHoldem {
     private history: RoundHistory;
-    private foldAction: IPokerFold;
+    private foldAction: IPokerAction;
+    private raiseAction: IPokerAction;
+    private callAction: IPokerAction;
+    private checkAction: IPokerAction;
     constructor(
         private party: Party,
         private deck: Deck,
@@ -18,6 +24,9 @@ export default class TexasHoldem {
     ) { 
         this.history = new RoundHistory(party);
         this.foldAction = new TexasHoldemFold(party);
+        this.raiseAction = new TexasHoldemRaise(table);
+        this.callAction = new TexasHoldemCall(table);
+        this.checkAction = new TexasHoldemCheck(table);
     }
     static build() {
         return new TexasHoldem(
@@ -98,72 +107,40 @@ export default class TexasHoldem {
         this.table.addCards(...this.deck.getNCardsFromDeck(3));
     }
     advanceTurn(turn: TurnData): TurnResponse {
-        const { action, player, value } = turn;
+        const { action } = turn;
         switch(action) {
             case FOLD_BET:
-                const response = this.foldAction.execute(turn);
+                const foldResponse = this.foldAction.execute(turn);
                 this.updateCurrentTurnAction(FOLD_BET);
                 this.createNextTurn();
-                return response;
+                return foldResponse;
             case RAISE_BET:
-                if(value <= 0) {
-                    return {
-                        message: `The value must be positive. ${value} provided`,
-                        success: false
-                    };
+                const raiseResponse = this.raiseAction.execute(turn);
+                if(!raiseResponse.success) {
+                    return raiseResponse;
                 }
-                const total = player.bet + value;
-                if(total <= this.table.bet) {
-                    return {
-                        message: `Insufficient Value ${total}`,
-                        success: false
-                    };
-                }
-                player.charge(value);
-                this.table.addToPot(value);
-                this.table.saveBiggestBet(player.bet);
                 this.updateCurrentTurnAction(RAISE_BET);                
                 this.createNextTurn();
-                return {
-                    message: `Player ${player.name} raised!`,
-                    success: true
-                };
+                return raiseResponse;
             case CALL_BET:
-                if(player.bet >= this.table.bet) {
-                    return {
-                        message: `Player ${player.name} cannot call!`,
-                        success: false
-                    }
+                const callResponse = this.callAction.execute(turn);
+                if(!callResponse.success) {
+                    return callResponse;
                 }
-                const valueToReachTableValue = this.table.bet - player.bet;
-                player.charge(valueToReachTableValue);                
-                this.table.addToPot(valueToReachTableValue);
                 this.updateCurrentTurnAction(CALL_BET);
                 this.createNextTurn();
-                return {
-                    message: `Player ${player.name} called!`,
-                    success: true
-                };
+                return callResponse;
             case CHECK_BET:
-                if(player.bet != this.table.bet) {
-                    return {
-                        message: `Player ${player.name} cannot check`,
-                        success: false
-                    };
-                }
+                const checkResponse = this.checkAction.execute(turn);
+                if(!checkResponse.success) return checkResponse;
                 this.updateCurrentTurnAction(CHECK_BET);
                 this.createNextTurn();
-                return {
-                    message: `Player ${player.name} checked`,
-                    success: true
-                };
-            default:
-                return {
-                    message: 'Unknown action',
-                    success: false
-                }
-                
+                return checkResponse;                
         }
+        return {
+            message: 'Unknown action',
+            success: false
+        };
     }
     playersStillNeedToPlay(): boolean {
         let notNeedToPlay = 1;

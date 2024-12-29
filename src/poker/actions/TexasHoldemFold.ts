@@ -1,8 +1,8 @@
 import { TurnData, TurnResponse } from "../../PokerTurn";
 import Party from "../Party";
-import IPokerFold from "./IPokerFold";
+import IPokerAction from "./IPokerAction";
 
-export default class TexasHoldemFold implements IPokerFold {
+export default class TexasHoldemFold implements IPokerAction {
     constructor(
         private party: Party,
     ) {}
