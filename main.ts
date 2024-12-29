@@ -38,7 +38,8 @@ async function executeCommand(command: Command<PokerAutomata>) {
             case FLOP:
                 terminal.displayFlopBadge(poker, game);
                 terminal.newLine();
-                await terminal.displayList(pfCommands);
+                const flopCommand = await terminal.displayList(pfCommands);
+                await executeCommand(flopCommand);
                 break;
         }
     }

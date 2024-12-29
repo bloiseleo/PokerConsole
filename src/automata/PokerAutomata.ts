@@ -1,7 +1,7 @@
 import EventEmitter from "node:events";
 import InvalidAction from "./errors/InvalidAction";
 import RejectedAction from "../errors/RejectedAction";
-import { FLOP, IDLE, PRE_FLOP } from "../models/PokerState";
+import { FLOP, IDLE, PRE_FLOP, TURN } from "../models/PokerState";
 import { FINISH, NEW_PLAYER, START, WIN } from "../models/PokerEvents";
 import { Player } from "../poker/Player";
 import InvalidType from "./errors/InvalidType";
@@ -233,7 +233,136 @@ export default class PokerAutomata extends EventEmitter {
         },
         [FLOP]: {
             onEnter: () => {
-                this.pokerGame.takeFlopCards()
+                if(this.currentState != FLOP) {
+                    this.pokerGame.takeFlopCards();
+                    return;
+                }
+                if(!this.pokerGame.playersStillNeedToPlay() && this.pokerGame.allPartyPlayedOnce) {
+                    return {
+                        state: TURN
+                    }
+                }
+            },
+            on: {
+                [FOLD_BET]: {
+                    action: (_: unknown) => {
+                        const turn = this.getTurn()!;
+                        const player = turn.player;
+                        try {
+                            const { message, success } = this.pokerGame.advanceTurn(new TurnData(
+                                FOLD_BET,
+                                0,
+                                player
+                            ));
+                            return {
+                                accepted: success,
+                                message,
+                                nextState: FLOP
+                            }
+                        } catch(err: unknown) {
+                            if(!(err instanceof PokerError)) {
+                                throw err;
+                            }
+                            return {
+                                accepted: false,
+                                message: err.message,
+                                nextState: FLOP
+                            };
+                        }
+                    }
+                },
+                [RAISE_BET]: {
+                    action: (data: unknown) => {
+                        if(!(data instanceof BetData)) {
+                            throw new InvalidType(BetData);
+                        }
+                        const turn = this.getTurn();
+                        const player = turn!.player;
+                        try {
+                            const { message, success } = this.pokerGame.advanceTurn(new TurnData(
+                                RAISE_BET,
+                                data.value,
+                                player
+                            ));
+                            return {
+                                accepted: success,
+                                message: message,
+                                nextState: FLOP
+                            };
+                        } catch(err: unknown) {
+                            if(!(err instanceof PokerError)) {
+                                throw err;
+                            }
+                            return {
+                                message: err.message,
+                                accepted: false,
+                                nextState: FLOP
+                            }
+                        }
+                        
+                    }
+                },
+                [CALL_BET]: {
+                    action: (_: unknown) => {
+                        const turn = this.getTurn();
+                        const player = turn!.player;
+                        try {
+                            const { message, success } = this.pokerGame.advanceTurn(new TurnData(
+                                CALL_BET,
+                                0,
+                                player
+                            ));
+                            return {
+                                accepted: success,
+                                message: success ? `Player ${player.name} called`: message,
+                                nextState: FLOP
+                            }    
+                        } catch(err: unknown) {
+                            if(!(err instanceof PokerError)) {
+                                throw err;
+                            }
+                            return {
+                                message: err.message,
+                                accepted: false,
+                                nextState: FLOP
+                            }
+                        }
+                        
+                    }
+                },
+                [CHECK_BET]: {
+                    action: (_: unknown) => {
+                        try {
+                            const { message, success} = this.pokerGame.advanceTurn(new TurnData(CHECK_BET, 0, this.getTurn()!.player));
+                            if(!success) {
+                                return {
+                                    accepted: success,
+                                    message,
+                                    nextState: CHECK_BET
+                                }
+                            }
+                            return {
+                                accepted: true,
+                                message: message,
+                                nextState: FLOP
+                            }
+                        } catch(err: unknown) {
+                            if(!(err instanceof PokerError)) {
+                                throw err;
+                            }
+                            return {
+                                message: err.message,
+                                accepted: false,
+                                nextState: FLOP
+                            };
+                        }
+                    }
+                }
+            }
+        },
+        [TURN]: {
+            onEnter: () => {
+                console.log('Hello Turn!');
             },
             on: {}
         },
