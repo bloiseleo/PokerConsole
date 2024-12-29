@@ -3,7 +3,7 @@ import PokerAutomata from "./src/automata/PokerAutomata";
 import { idleCommands, preFloopCommands } from './src/commands';
 import Command from "./src/commands/Command";
 import Terminal from "./src/helpers/Terminal";
-import { FLOP, IDLE, PRE_FLOP } from "./src/models/PokerState";
+import { FLOP, IDLE, PRE_FLOP } from "./src/poker/symbols/PokerState";
 
 const game = TexasHoldem.build();
 
