@@ -1,5 +1,5 @@
 import { Player } from "./poker/Player";
-import { CALL_BET, CHECK_BET, FOLD_BET, RAISE_BET } from "./models/PokerBetActions";
+import { CALL_BET, CHECK_BET, FOLD_BET, RAISE_BET } from "./poker/symbols/PokerBetActions";
 import Party from "./poker/Party";
 import { PokerTurn, TurnData, TurnResponse } from "./PokerTurn";
 import Deck from "./poker/Deck";

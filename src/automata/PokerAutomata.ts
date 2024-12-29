@@ -1,13 +1,13 @@
 import EventEmitter from "node:events";
 import InvalidAction from "./errors/InvalidAction";
 import RejectedAction from "../errors/RejectedAction";
-import { FLOP, IDLE, PRE_FLOP, TURN } from "../models/PokerState";
-import { FINISH, NEW_PLAYER, START, WIN } from "../models/PokerEvents";
+import { FINISH, FLOP, IDLE, PRE_FLOP, TURN } from "../poker/symbols/PokerState";
+import { NEW_PLAYER, START, WIN } from "../poker/symbols/PokerEvents";
 import { Player } from "../poker/Player";
 import InvalidType from "./errors/InvalidType";
 import PokerError from "../errors/PokerError";
 import PartyFull from "../errors/PartyFull";
-import { CALL_BET, CHECK_BET, FOLD_BET, RAISE_BET } from "../models/PokerBetActions";
+import { CALL_BET, CHECK_BET, FOLD_BET, RAISE_BET } from "../poker/symbols/PokerBetActions";
 import { TurnData } from "../PokerTurn";
 import { BetData } from "../dtos/BetData";
 import TexasHoldem from "../TexasHoldem";
