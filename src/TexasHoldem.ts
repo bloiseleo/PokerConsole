@@ -12,30 +12,32 @@ import TexasHoldemCall from "./poker/actions/TexasHoldemCall";
 import TexasHoldemCheck from "./poker/actions/TexasHoldemCheck";
 
 export default class TexasHoldem {
-    private history: RoundHistory;
-    private foldAction: IPokerAction;
-    private raiseAction: IPokerAction;
-    private callAction: IPokerAction;
-    private checkAction: IPokerAction;
     constructor(
         private party: Party,
         private deck: Deck,
-        private table: Table
-    ) { 
-        this.history = new RoundHistory(party);
-        this.foldAction = new TexasHoldemFold(party);
-        this.raiseAction = new TexasHoldemRaise(table);
-        this.callAction = new TexasHoldemCall(table);
-        this.checkAction = new TexasHoldemCheck(table);
-    }
+        private table: Table,
+        private history: RoundHistory,
+        private foldAction: IPokerAction,
+        private raiseAction: IPokerAction,
+        private callAction: IPokerAction,
+        private checkAction: IPokerAction,
+    ) { }
     static build() {
+        const party = new Party(2, 5);
+        const deck = Deck.generateDefault();
+        const table = new Table(
+            5,
+            10
+        );
         return new TexasHoldem(
-            new Party(2, 5),
-            Deck.generateDefault(),
-            new Table(
-                5,
-                10
-            )
+            party,
+            deck,
+            table,
+            new RoundHistory(party),
+            new TexasHoldemFold(party),
+            new TexasHoldemRaise(table),
+            new TexasHoldemCall(table),
+            new TexasHoldemCheck(table)
         )
     }
     get players(): Player[] {
