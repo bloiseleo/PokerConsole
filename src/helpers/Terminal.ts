@@ -4,7 +4,7 @@ import { Player } from "../poker/Player";
 import PokerAutomata from "../automata/PokerAutomata";
 import TexasHoldem from "../TexasHoldem";
 import PokerView from "../view/PokerView";
-import { FLOP, IDLE, PRE_FLOP } from "../poker/symbols/PokerState";
+import { FLOP, IDLE, PRE_FLOP, RIVER, TURN } from "../poker/symbols/PokerState";
 
 export default class Terminal {
     private readline: Interface;
@@ -22,6 +22,10 @@ export default class Terminal {
                 return "Pre-Flop";
             case FLOP:
                 return "Flop";
+            case TURN:
+                return "Turn";
+            case RIVER:
+                return "River";
             default:
                 return "Unknown Status";
         }

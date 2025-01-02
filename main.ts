@@ -3,7 +3,7 @@ import PokerAutomata from "./src/automata/PokerAutomata";
 import { idleCommands, preFloopCommands } from './src/commands';
 import Command from "./src/commands/Command";
 import Terminal from "./src/helpers/Terminal";
-import { FLOP, IDLE, PRE_FLOP } from "./src/poker/symbols/PokerState";
+import { FLOP, IDLE, PRE_FLOP, RIVER, TURN } from "./src/poker/symbols/PokerState";
 
 const game = TexasHoldem.build();
 
@@ -40,6 +40,18 @@ async function executeCommand(command: Command<PokerAutomata>) {
                 terminal.newLine();
                 const flopCommand = await terminal.displayList(pfCommands);
                 await executeCommand(flopCommand);
+                break;
+            case TURN:
+                terminal.displayFlopBadge(poker, game);
+                terminal.newLine();
+                const turnCommand = await terminal.displayList(pfCommands);
+                await executeCommand(turnCommand);
+                break;
+            case RIVER:
+                terminal.displayFlopBadge(poker, game);
+                terminal.newLine();
+                const riverCommand = await terminal.displayList(pfCommands);
+                await executeCommand(riverCommand);
                 break;
         }
     }

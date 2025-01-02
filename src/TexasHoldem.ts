@@ -79,8 +79,12 @@ export default class TexasHoldem {
         }
         return round;
     }
-    private createNextTurn() {
+    private nextTurn() {
         this.getCurrentRoundOrCreateIfNotExists().nextTurn();
+    }
+    private nextRound() {
+        this.history.nextRound();
+        this.nextTurn();
     }
     private updateCurrentTurnAction(action: symbol) {
         if(this.turn) {
@@ -98,15 +102,22 @@ export default class TexasHoldem {
             }
             player.addToHand(...this.deck.getNCardsFromDeck(2));
         });
-        this.createNextTurn();
+        this.nextRound();
     }
     partyWithMinimumRequired(): boolean {
         return this.party.minimumFulfilled;
     }
-    takeFlopCards(): void {
+    river(): void {
+        this.table.addCards(...this.deck.getNCardsFromDeck(1));
+        this.nextRound();
+    }
+    goTurn(): void {
+        this.table.addCards(...this.deck.getNCardsFromDeck(1));
+        this.nextRound();
+    }
+    flop(): void {
         this.table.addCards(...this.deck.getNCardsFromDeck(3));
-        this.history.nextRound();
-        this.createNextTurn();   
+        this.nextRound();
     }
     advanceTurn(turn: TurnData): TurnResponse {
         const { action } = turn;
@@ -114,7 +125,7 @@ export default class TexasHoldem {
             case FOLD_BET:
                 const foldResponse = this.foldAction.execute(turn);
                 this.updateCurrentTurnAction(FOLD_BET);
-                this.createNextTurn();
+                this.nextTurn();
                 return foldResponse;
             case RAISE_BET:
                 const raiseResponse = this.raiseAction.execute(turn);
@@ -122,7 +133,7 @@ export default class TexasHoldem {
                     return raiseResponse;
                 }
                 this.updateCurrentTurnAction(RAISE_BET);                
-                this.createNextTurn();
+                this.nextTurn();
                 return raiseResponse;
             case CALL_BET:
                 const callResponse = this.callAction.execute(turn);
@@ -130,13 +141,13 @@ export default class TexasHoldem {
                     return callResponse;
                 }
                 this.updateCurrentTurnAction(CALL_BET);
-                this.createNextTurn();
+                this.nextTurn();
                 return callResponse;
             case CHECK_BET:
                 const checkResponse = this.checkAction.execute(turn);
                 if(!checkResponse.success) return checkResponse;
                 this.updateCurrentTurnAction(CHECK_BET);
-                this.createNextTurn();
+                this.nextTurn();
                 return checkResponse;                
         }
         return {
