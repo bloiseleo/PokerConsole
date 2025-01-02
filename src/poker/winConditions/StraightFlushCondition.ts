@@ -6,6 +6,13 @@ import { Suit } from "../Suit";
 import { IWinCondition } from "./IWinCondition";
 
 export default class StraightFlushCondition implements IWinCondition {
+    private _points: number = 0;
+    set points(points: number) {
+        this._points = points;
+    }
+    get points(): number {
+        return this._points;
+    }
     get order(): number {
         return 1;
     }
