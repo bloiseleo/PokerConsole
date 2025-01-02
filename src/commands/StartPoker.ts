@@ -1,5 +1,5 @@
 import PokerAutomata from "../automata/PokerAutomata";
-import { START } from "../models/PokerEvents";
+import { START } from "../poker/symbols/PokerEvents";
 import Command from "./Command";
 
 export default class StartPoker extends Command<PokerAutomata> {

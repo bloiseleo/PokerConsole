@@ -1,5 +1,5 @@
 import PokerAutomata from "../automata/PokerAutomata";
-import { CALL_BET } from "../models/PokerBetActions";
+import { CALL_BET } from "../poker/symbols/PokerBetActions";
 import Command from "./Command";
 
 export default class CallCommandPoker extends Command<PokerAutomata> {

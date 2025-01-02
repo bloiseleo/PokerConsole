@@ -1,5 +1,5 @@
 import PokerAutomata from "../automata/PokerAutomata";
-import { FOLD_BET } from "../models/PokerBetActions";
+import { FOLD_BET } from "../poker/symbols/PokerBetActions";
 import Command from "./Command";
 
 export class FoldCommandPoker extends Command<PokerAutomata> {

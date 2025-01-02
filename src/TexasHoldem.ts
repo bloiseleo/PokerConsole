@@ -105,6 +105,8 @@ export default class TexasHoldem {
     }
     takeFlopCards(): void {
         this.table.addCards(...this.deck.getNCardsFromDeck(3));
+        this.history.nextRound();
+        this.createNextTurn();   
     }
     advanceTurn(turn: TurnData): TurnResponse {
         const { action } = turn;

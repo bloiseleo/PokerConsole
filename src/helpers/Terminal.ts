@@ -1,10 +1,10 @@
 import { createInterface, Interface } from "readline/promises";
 import Command from "../commands/Command";
-import { FLOP, IDLE, PRE_FLOP } from "../models/PokerState";
 import { Player } from "../poker/Player";
 import PokerAutomata from "../automata/PokerAutomata";
 import TexasHoldem from "../TexasHoldem";
 import PokerView from "../view/PokerView";
+import { FLOP, IDLE, PRE_FLOP } from "../poker/symbols/PokerState";
 
 export default class Terminal {
     private readline: Interface;

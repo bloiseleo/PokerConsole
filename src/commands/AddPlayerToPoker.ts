@@ -1,8 +1,8 @@
 import { Player } from "../poker/Player";
 import Command from "./Command";
-import { NEW_PLAYER } from "../models/PokerEvents";
 import Wallet from "../poker/Wallet";
 import PokerAutomata from "../automata/PokerAutomata";
+import { NEW_PLAYER } from "../poker/symbols/PokerEvents";
 
 export default class AddPlayerToPokerCommand extends Command<PokerAutomata> {
     private static counter = 0;
