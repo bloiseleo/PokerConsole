@@ -8,6 +8,9 @@ Play Poker inside your console!
 
 Developed using typescript and no external dependencies.
 
+### Goals
+Create a state machine and use it to determine what the game must do accordingly to the current state and user input.
+
 ## How to run?
 - Clone the repository
 - Download and Install Node JS
